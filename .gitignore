@@ -4,3 +4,8 @@ theThird/web
 theThird/web
 osThird/.idea
 osThird/cmake-build-debug/
+*.xml
+/cmake-build-debug
+osForth/CMakeLists.txt
+osForth/cmake-build-debug/
+osForth/.idea/
