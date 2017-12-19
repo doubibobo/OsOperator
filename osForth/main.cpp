@@ -1,84 +1,88 @@
 #include <iostream>
+#include <fstream>
+#include <malloc.h>
+
 #define N 10
-#define M 100
 
 using namespace std;
 
-// å®šä¹‰ç”¨æˆ·ç»“æ„
+// ¶¨ÒåÓÃ»§½á¹¹
 struct USER {
     string username;
+    string password;
     int usernameNumber;
 };
 
-// å®šä¹‰ç”¨æˆ·æ–‡ä»¶ç›®å½•UFD
+// ¶¨ÒåÓÃ»§ÎÄ¼şÄ¿Â¼UFD
 struct UFD {
     string filename;
-    unsigned char protectedNumber;      // å®šä¹‰æ–‡ä»¶çš„ä¿æŠ¤ç 
-    int fileLength;                     // è®¾ç½®æ–‡ä»¶çš„å¤§å°ï¼Œä»¥å­—èŠ‚ä¸ºå•ä½
+    unsigned char protectedNumber;      // ¶¨ÒåÎÄ¼şµÄ±£»¤Âë
+    int fileLength;                     // ÉèÖÃÎÄ¼şµÄ´óĞ¡£¬ÒÔ×Ö½ÚÎªµ¥Î»
 };
 
-// å®šä¹‰UFDçš„èŠ‚ç‚¹
+// ¶¨ÒåUFDµÄ½Úµã
 struct UFDNode {
     UFD theUFDContent;
-    UFD* theNextUFD;
+    UFDNode* theNextUFD;
 };
 
-// è®¾ç½®æ–‡ä»¶æ‰“å¼€æ—¶è¿è¡Œæ—¶ç›®å½•
+// ÉèÖÃÎÄ¼ş´ò¿ªÊ±ÔËĞĞÊ±Ä¿Â¼
 struct AFD {
-    string filename;                // æ‰“å¼€æ–‡ä»¶å·ç 
-    unsigned  char protectedNumber; // è®¾ç½®æ–‡ä»¶çš„ä¿æŠ¤ç 
-    int readWrite;                  // è®¾ç½®è¯»å†™æŒ‡é’ˆç­‰
+    string filename;                // ´ò¿ªÎÄ¼şºÅÂë
+    unsigned  char protectedNumber; // ÉèÖÃÎÄ¼şµÄ±£»¤Âë
+    int readWrite;                  // ÉèÖÃ¶ÁĞ´Ö¸ÕëµÈ
 };
 
-// å®šä¹‰æ–‡ä»¶æ‰“å¼€æ—¶çš„ç›®å½•
+// ¶¨ÒåÎÄ¼ş´ò¿ªÊ±µÄÄ¿Â¼
 struct AFDNode {
     AFD theAFDContent;
     AFD* theNextAFD;
 };
 
-// å®šä¹‰ä¸»æ–‡ä»¶ç›®å½•MFD
-struct MFD {
-    string username;
-    UFD* UFDPoint;
-};
-
-// è®¾ç½®ä¸»æ–‡ä»¶ç›®å½•èŠ‚ç‚¹
+// ÉèÖÃÖ÷ÎÄ¼şÄ¿Â¼½Úµã
 struct MFDNode {
-    MFD theMFDContent;
-    MFD* theNextMFD;
+    string theMFDContent;
+    UFDNode* theHeadUFD;
 };
 
 USER allUser[N];
+MFDNode MFDTable[N];      // ÉèÖÃÖ÷ÎÄ¼şÁ´±í
+AFDNode* AFDTable;      // ÉèÖÃ´ò¿ªÎÄ¼şÄ¿Â¼
 
-// åˆ›å»ºä¸€ä¸ªç”¨æˆ·
-int createUser();
-// è¿›è¡Œç™»å½•
+int userNumber = 0;     // ¼ÇÂ¼ÓÃ»§µÄÊıÁ¿
+int currentUserNumber = -1; // ¼ÇÂ¼µ±Ç°µÇÂ¼ÓÃ»§
+
+
+// ËùÓĞ¹¤×÷½øĞĞ³õÊ¼»¯²Ù×÷
+void initAll();
+// ´´½¨Ò»¸öÓÃ»§
+bool createUser();
+// ½øĞĞµÇÂ¼
 void doLogin();
-// æ£€æŸ¥ç”¨æˆ·å
-int checkUsername(string username);
-// å‡ºé”™ä¿¡æ¯æç¤º
+// ³ö´íĞÅÏ¢ÌáÊ¾
 void outputMessage(int message);
-// æ˜¾ç¤ºæŸä¸€ä¸ªç”¨æˆ·åä¸‹çš„æ‰€æœ‰ç›®å½•æ–‡ä»¶
+// ÏÔÊ¾Ä³Ò»¸öÓÃ»§ÃûÏÂµÄËùÓĞÄ¿Â¼ÎÄ¼ş
 void displayAllFiles(string username);
-// åˆå§‹åŒ–æ–‡ä»¶è¡¨AFD
+// ³õÊ¼»¯ÎÄ¼ş±íAFD
 void initAFDofUser(string username);
-// è¾“å…¥æ“ä½œå‘½ä»¤
+// ÊäÈë²Ù×÷ÃüÁî
 string inputCommand();
-// åˆ›å»ºæ–‡ä»¶
-void createFile(string username, string filename);
-// åˆ é™¤æ–‡ä»¶
-void deleteFile(string username, string filename);
-// æ‰“å¼€æ–‡ä»¶
+// ´´½¨ÎÄ¼ş
+void createFile(string username);
+// É¾³ıÎÄ¼ş
+void deleteFile(string username);
+// ´ò¿ªÎÄ¼ş
 void openFile(string username, string filename);
-// å…³é—­æ–‡ä»¶
+// ¹Ø±ÕÎÄ¼ş
 void closeFile(string username, string filename);
 
 
 int main() {
-    cout << "doubibobo çš„æ–‡ä»¶ç®¡ç†ç³»ç»Ÿ" << endl;
-    cout << "è¯·é€‰æ‹©æ‚¨è¦è¿›è¡Œçš„æ“ä½œ" << endl;
-    cout << "1ã€æ³¨å†Œç”¨æˆ·" << endl;
-    cout << "2ã€è¿›è¡Œç™»å½•" << endl;
+    initAll();
+    cout << "doubibobo µÄÎÄ¼ş¹ÜÀíÏµÍ³" << endl;
+    cout << "ÇëÑ¡ÔñÄúÒª½øĞĞµÄ²Ù×÷" << endl;
+    cout << "1¡¢×¢²áÓÃ»§" << endl;
+    cout << "2¡¢½øĞĞµÇÂ¼" << endl;
     int choseOperator;
     while (cin >> choseOperator) {
         switch (choseOperator) {
@@ -95,7 +99,112 @@ int main() {
     return 0;
 }
 
-int createUser() {
-    
+void initAll() {
+    for (int i = 0; i < N; i++) {
+        allUser[i].username = "";
+        allUser[i].password = "";
+        allUser[i].usernameNumber = 0;
+        MFDTable[i].theMFDContent = "";
+        MFDTable[i].theHeadUFD = NULL;
+    }
+    AFDTable = NULL;
 }
 
+bool createUser() {
+    if (userNumber >= 10) {
+        cout << "²»Ö§³Ö10¸öÒÔÉÏµÄÓÃ»§" << endl;
+        return false;
+    } else {
+        cout << "ÇëÊäÈëÄúÒª´´½¨µÄÓÃ»§Ãû" << endl;
+        string username;
+        cin >> username;
+        cout << "ÇëÊäÈëÃÜÂë" << endl;
+        string password;
+        cin >> password;
+        cout << "´´½¨ÓÃ»§Ãû³É¹¦£¬ÄúÊÇµÚ" << userNumber+1 << "¸öÓÃ»§£¡" << endl;
+        allUser[userNumber].username = username;
+        allUser[userNumber].password = password;
+        allUser[userNumber].usernameNumber = userNumber+1;
+        // ÓÃ»§´´½¨³É¹¦£¬ÔÚMFDÖĞ²åÈëÏàÓ¦µÄÏîÄ¿
+        MFDTable[userNumber].theMFDContent = username;
+        MFDTable[userNumber].theHeadUFD = NULL;
+        userNumber += 1;
+        return true;
+    }
+}
+
+void doLogin() {
+    cout << "ÇëÊäÈëÄúµÄÓÃ»§Ãû" << endl;
+    string username;
+    cin >> username;
+    cout << "ÇëÊäÈëÄúµÄÃÜÂë" << endl;
+    string password;
+    cin >> password;
+    for (int i = 0; i < userNumber; i++) {
+        if ((allUser[i].username.compare(username)) == 0 && (allUser[i].password.compare(password) == 0)) {
+            currentUserNumber = i;
+            cout << "µÇÂ¼³É¹¦£¡" << endl;
+            break;
+        }
+    }
+    // µÇÂ¼Ö®ºó£¬ÁĞ³öËùÓĞµÄÎÄ¼ş£¬²¢ÇÒ¶ÔAFD½øĞĞ³õÊ¼»¯²Ù×÷
+    // initAFDofUser(username);
+    // displayAllFiles(username);
+    cout << "ÇëÑ¡ÔñÄúÒª½øĞĞµÄ²Ù×÷" << endl;
+    cout << "1¡¢´´½¨Ò»¸öÎÄ¼ş" << endl;
+    cout << "2¡¢É¾³ıÒ»¸öÎÄ¼ş" << endl;
+    cout << "3¡¢´ò¿ªÒ»¸öÎÄ¼ş" << endl;
+    cout << "4¡¢¹Ø±ÕÒ»¸öÎÄ¼ş" << endl;
+    int loginOperator;
+    cin >> loginOperator;
+    while (loginOperator != 0) {
+        switch (loginOperator) {
+            case 1:
+                createFile(username);
+                break;
+            case 2:
+                deleteFile(username);
+                break;
+            default:
+                continue;
+        }
+    }
+}
+
+void createFile(string username) {
+    cout << "ÇëÊäÈëÒª´´½¨µÄÎÄ¼şµÄÃû³Æ£¬ÎÄ¼ş´´½¨¸ñÊ½Îªtxt" << endl;
+    string filename;
+    cin >> filename;
+    ofstream mcfile;    // ´´½¨Ò»¸ö¶ÔÏó
+    mcfile.open("F://osFileoutput//"+filename+".txt");    // ´´½¨ÎÄ¼ş
+    mcfile.close();
+    UFDNode* pStr = MFDTable[currentUserNumber].theHeadUFD;
+    UFDNode* thePtr = MFDTable[currentUserNumber].theHeadUFD;
+    UFDNode* theNewNode;
+    theNewNode = (UFDNode *)malloc(sizeof(UFDNode));
+    if (pStr == NULL) {
+        cout << "doubibobolalala" << endl;
+        pStr = theNewNode;
+        pStr->theNextUFD = NULL;
+        pStr->theUFDContent.fileLength = 0;
+        pStr->theUFDContent.filename = filename;
+        pStr->theUFDContent.protectedNumber = 0x0003;
+    } else {
+        while(thePtr->theNextUFD != NULL) thePtr = thePtr->theNextUFD;
+        // ½øĞĞÎÄ¼şµÄ´´½¨
+        thePtr->theNextUFD = theNewNode;
+        thePtr->theNextUFD->theNextUFD = NULL;
+        thePtr->theNextUFD->theUFDContent.fileLength = 0;
+        thePtr->theNextUFD->theUFDContent.filename = filename;
+        thePtr->theNextUFD->theUFDContent.protectedNumber = 0x0003;
+    }
+}
+
+void deleteFile(string username) {
+    cout << "ÇëÊäÈëÒªÉ¾³ıµÄÎÄ¼şµÄÃû³Æ£¡" << endl;
+    string filename;
+    cin >> filename;
+    string deleteFilename = "F://osFileoutput//"+filename+".txt";
+    remove(deleteFilename.c_str());    // ´´½¨ÎÄ¼ş
+    cout << "É¾³ıÎÄ¼ş³É¹¦£¡" << endl;
+}
