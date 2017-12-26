@@ -1,7 +1,7 @@
 #include <iostream>
+#include <string>
 #include <fstream>
 #include <malloc.h>
-
 #define N 10
 
 using namespace std;
@@ -14,29 +14,33 @@ struct USER {
 };
 
 // 定义用户文件目录UFD
-struct UFD {
-    string filename;
-    unsigned char protectedNumber;      // 定义文件的保护码
-    int fileLength;                     // 设置文件的大小，以字节为单位
-};
+//struct UFD {
+//    string filename;
+//    unsigned char protectedNumber;      // 定义文件的保护码
+//    int fileLength;                     // 设置文件的大小，以字节为单位
+//};
 
 // 定义UFD的节点
 struct UFDNode {
-    UFD theUFDContent;
+    string filename;
+    unsigned char protectedNumber;      // 定义文件的保护码
+    int fileLength;                     // 设置文件的大小，以字节为单位
     UFDNode* theNextUFD;
 };
 
 // 设置文件打开时运行时目录
-struct AFD {
-    string filename;                // 打开文件号码
-    unsigned  char protectedNumber; // 设置文件的保护码
-    int readWrite;                  // 设置读写指针等
-};
+//struct AFD {
+//    string filename;                // 打开文件号码
+//    unsigned  char protectedNumber; // 设置文件的保护码
+//    int readWrite;                  // 设置读写指针等
+//};
 
 // 定义文件打开时的目录
 struct AFDNode {
-    AFD theAFDContent;
-    AFD* theNextAFD;
+    string filename;                // 打开文件号码
+    unsigned  char protectedNumber; // 设置文件的保护码
+    int readWrite;                  // 设置读写指针等
+    AFDNode* theNextAFD;
 };
 
 // 设置主文件目录节点
@@ -47,6 +51,7 @@ struct MFDNode {
 
 USER allUser[N];
 MFDNode MFDTable[N];      // 设置主文件链表
+UFDNode UFDNode[N][N];    //
 AFDNode* AFDTable;      // 设置打开文件目录
 
 int userNumber = 0;     // 记录用户的数量
@@ -174,29 +179,35 @@ void doLogin() {
 void createFile(string username) {
     cout << "请输入要创建的文件的名称，文件创建格式为txt" << endl;
     string filename;
+    string tmpFilename;
     cin >> filename;
+    tmpFilename = filename;
     ofstream mcfile;    // 创建一个对象
     mcfile.open("F://osFileoutput//"+filename+".txt");    // 创建文件
+    if (!mcfile) {
+        cout << "file open failed!" << endl;
+        return;
+    } else {
+        cout << "file open success and now write something into it";
+    }
     mcfile.close();
+    cout << "currentUserNumber" << currentUserNumber << endl;
     UFDNode* pStr = MFDTable[currentUserNumber].theHeadUFD;
-    UFDNode* thePtr = MFDTable[currentUserNumber].theHeadUFD;
     UFDNode* theNewNode;
     theNewNode = (UFDNode *)malloc(sizeof(UFDNode));
+    theNewNode->theNextUFD = NULL;
+    theNewNode->fileLength = 0;
+    cout << "filename" << filename << endl;
+    theNewNode->filename = tmpFilename;
+    cout << "protectedNumber" << endl;
+    theNewNode->protectedNumber = 3;
     if (pStr == NULL) {
-        cout << "doubibobolalala" << endl;
-        pStr = theNewNode;
-        pStr->theNextUFD = NULL;
-        pStr->theUFDContent.fileLength = 0;
-        pStr->theUFDContent.filename = filename;
-        pStr->theUFDContent.protectedNumber = 0x0003;
+        MFDTable[currentUserNumber].theHeadUFD = theNewNode;
+        cout << "I have made a dir" << endl;
     } else {
-        while(thePtr->theNextUFD != NULL) thePtr = thePtr->theNextUFD;
+        while(pStr->theNextUFD != NULL) pStr = pStr->theNextUFD;
         // 进行文件的创建
-        thePtr->theNextUFD = theNewNode;
-        thePtr->theNextUFD->theNextUFD = NULL;
-        thePtr->theNextUFD->theUFDContent.fileLength = 0;
-        thePtr->theNextUFD->theUFDContent.filename = filename;
-        thePtr->theNextUFD->theUFDContent.protectedNumber = 0x0003;
+        pStr->theNextUFD = theNewNode;
     }
 }
 
@@ -205,6 +216,10 @@ void deleteFile(string username) {
     string filename;
     cin >> filename;
     string deleteFilename = "F://osFileoutput//"+filename+".txt";
-    remove(deleteFilename.c_str());    // 创建文件
-    cout << "删除文件成功！" << endl;
+    // 删除一个文件
+    if (remove(deleteFilename.c_str()) == -1) {
+        cout << "删除文件失败" << endl;
+    } else {
+        cout << "删除文件成功！" << endl;
+    }
 }
